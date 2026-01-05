@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recipe Relevance Evaluation</title>
 
+    <!-- Label Studio Frontend Library -->
+    <script src="https://unpkg.com/@heartexlabs/label-studio@1.8.0/build/static/js/main.js"></script>
+    <link href="https://unpkg.com/@heartexlabs/label-studio@1.8.0/build/static/css/main.css" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
@@ -16,82 +20,33 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
         }
 
         .header {
             text-align: center;
             padding: 20px;
             color: white;
+            margin-bottom: 20px;
         }
 
         .header h1 {
-            font-size: 2em;
-            margin-bottom: 8px;
+            font-size: 2.2em;
+            margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
 
-        .task-info {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
         }
 
-        .query-image-container {
-            flex-shrink: 0;
-        }
-
-        .query-image {
-            width: 250px;
-            height: 250px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 4px solid #2196F3;
-        }
-
-        .task-details {
-            flex: 1;
-        }
-
-        .task-details h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .task-details p {
-            color: #666;
-            line-height: 1.6;
-        }
-
-        .instructions-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196F3;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
-
-        .instructions-box h4 {
-            color: #1976d2;
-            margin-bottom: 8px;
-        }
-
-        .instructions-box ul {
-            margin-left: 20px;
-            color: #555;
-        }
-
-        .progress-bar-container {
+        .progress-container {
             background: white;
             border-radius: 12px;
             padding: 15px 25px;
@@ -106,9 +61,9 @@
         }
 
         .progress-bar {
-            height: 24px;
+            height: 20px;
             background: #e0e0e0;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
         }
 
@@ -116,296 +71,58 @@
             height: 100%;
             background: linear-gradient(90deg, #4CAF50, #45a049);
             transition: width 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
         }
 
-        /* Main Container */
-        .ranking-container {
+        .label-studio-wrapper {
             background: white;
             border-radius: 16px;
-            padding: 25px;
+            overflow: hidden;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            min-height: 600px;
         }
 
-        /* Relevance Group Buttons */
-        .relevance-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 12px;
-            margin-bottom: 25px;
+        #label-studio {
+            min-height: 600px;
         }
 
-        .relevance-btn {
-            padding: 15px 40px;
-            font-size: 1.1em;
-            font-weight: 600;
-            border: 3px solid;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            min-width: 140px;
+        /* Custom styling for Label Studio Ranker */
+        .htx-ranker-column {
+            background: #f8f9fa !important;
+            border-radius: 12px !important;
+            padding: 15px !important;
+            margin: 10px !important;
         }
 
-        .relevance-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        .htx-ranker-item {
+            background: white !important;
+            border: 2px solid #e0e0e0 !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+            margin-bottom: 10px !important;
+            transition: all 0.2s !important;
         }
 
-        .relevance-btn.high {
-            border-color: #4CAF50;
-            background: white;
-            color: #4CAF50;
+        .htx-ranker-item:hover {
+            border-color: #2196F3 !important;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2) !important;
         }
 
-        .relevance-btn.high:hover, .relevance-btn.high.active {
-            background: #4CAF50;
-            color: white;
+        /* Bucket colors */
+        [data-bucket="high"] {
+            background: #e8f5e9 !important;
+            border: 2px solid #4CAF50 !important;
         }
 
-        .relevance-btn.medium {
-            border-color: #FF9800;
-            background: white;
-            color: #FF9800;
+        [data-bucket="medium"] {
+            background: #fff3e0 !important;
+            border: 2px solid #FF9800 !important;
         }
 
-        .relevance-btn.medium:hover, .relevance-btn.medium.active {
-            background: #FF9800;
-            color: white;
+        [data-bucket="low"] {
+            background: #ffebee !important;
+            border: 2px solid #f44336 !important;
         }
 
-        .relevance-btn.low {
-            border-color: #f44336;
-            background: white;
-            color: #f44336;
-        }
-
-        .relevance-btn.low:hover, .relevance-btn.low.active {
-            background: #f44336;
-            color: white;
-        }
-
-        .relevance-hint {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 1.1em;
-        }
-
-        .relevance-hint strong {
-            color: #2196F3;
-        }
-
-        /* Recipe Grid */
-        .recipe-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .recipe-card {
-            border: 3px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .recipe-card:hover {
-            border-color: #2196F3;
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
-        }
-
-        .recipe-card.selected {
-            border-color: #2196F3;
-            box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.3);
-        }
-
-        /* Relevance badges */
-        .recipe-card.high {
-            border-color: #4CAF50;
-            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-        }
-
-        .recipe-card.medium {
-            border-color: #FF9800;
-            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-        }
-
-        .recipe-card.low {
-            border-color: #f44336;
-            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-        }
-
-        .relevance-badge {
-            position: absolute;
-            top: -12px;
-            right: -12px;
-            padding: 6px 14px;
-            background: #ccc;
-            color: white;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.85em;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            text-transform: uppercase;
-        }
-
-        .recipe-card.high .relevance-badge {
-            background: #4CAF50;
-        }
-
-        .recipe-card.medium .relevance-badge {
-            background: #FF9800;
-        }
-
-        .recipe-card.low .relevance-badge {
-            background: #f44336;
-        }
-
-        .recipe-title {
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 12px;
-            padding-right: 60px;
-        }
-
-        .recipe-ingredients {
-            background: rgba(255,255,255,0.7);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .recipe-ingredients h5 {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .ingredient-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .ingredient-tag {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            border: 1px solid #c8e6c9;
-        }
-
-        /* Summary Section */
-        .summary-section {
-            background: #f5f5f5;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-
-        .summary-section h4 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        .summary-groups {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .summary-group {
-            flex: 1;
-            min-width: 200px;
-            padding: 15px;
-            border-radius: 10px;
-            border: 2px solid;
-        }
-
-        .summary-group.high {
-            border-color: #4CAF50;
-            background: #e8f5e9;
-        }
-
-        .summary-group.medium {
-            border-color: #FF9800;
-            background: #fff3e0;
-        }
-
-        .summary-group.low {
-            border-color: #f44336;
-            background: #ffebee;
-        }
-
-        .summary-group h5 {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .summary-group.high h5 { color: #2e7d32; }
-        .summary-group.medium h5 { color: #e65100; }
-        .summary-group.low h5 { color: #c62828; }
-
-        .summary-count {
-            font-size: 1.5em;
-            font-weight: 700;
-        }
-
-        .summary-recipes {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 8px;
-        }
-
-        /* Submit Section */
-        .submit-section {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #eee;
-        }
-
-        .btn {
-            padding: 15px 50px;
-            font-size: 1.1em;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin: 0 10px;
-        }
-
-        .btn-primary {
-            background: #4CAF50;
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-        }
-
-        .btn-primary:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Success Screen */
         .success-screen {
             background: white;
             border-radius: 16px;
@@ -425,6 +142,26 @@
             margin-bottom: 20px;
         }
 
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
         .hidden {
             display: none !important;
         }
@@ -434,89 +171,23 @@
     <div class="container">
         <div class="header">
             <h1>Recipe Relevance Evaluation</h1>
-            <p>No login required - Help us evaluate recipe matching!</p>
-        </div>
-
-        <!-- Task Info -->
-        <div id="taskInfo" class="task-info">
-            <div class="query-image-container">
-                <img id="queryImage" class="query-image" src="" alt="Ingredients">
-            </div>
-            <div class="task-details">
-                <h2>Query Image <span id="taskNumber">1</span> of <span id="totalTasks">3</span></h2>
-                <p id="queryDescription">Look at the ingredients shown and categorize each recipe.</p>
-                <div class="instructions-box">
-                    <h4>How to Categorize:</h4>
-                    <ul>
-                        <li><strong style="color: #4CAF50;">HIGH</strong> = Can make this recipe well with the shown ingredients</li>
-                        <li><strong style="color: #FF9800;">MEDIUM</strong> = Can partially make it, needs a few more ingredients</li>
-                        <li><strong style="color: #f44336;">LOW</strong> = Cannot make it, needs too many missing ingredients</li>
-                    </ul>
-                </div>
-            </div>
+            <p>Drag recipes into the appropriate relevance bucket: HIGH, MEDIUM, or LOW</p>
         </div>
 
         <!-- Progress -->
-        <div class="progress-bar-container">
+        <div class="progress-container">
             <div class="progress-info">
-                <span><strong>Recipes Categorized:</strong> <span id="rankedCount">0</span> / <span id="totalRecipes">20</span></span>
-                <span id="sessionDisplay" style="color: #888; font-size: 0.9em;"></span>
+                <span><strong>Task:</strong> <span id="taskCounter">1 of 2</span></span>
+                <span id="sessionId" style="color: #888; font-size: 0.9em;"></span>
             </div>
             <div class="progress-bar">
-                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                <div class="progress-fill" id="progressFill" style="width: 50%"></div>
             </div>
         </div>
 
-        <!-- Main Container -->
-        <div id="rankingContainer" class="ranking-container">
-            <!-- Relevance Buttons -->
-            <div class="relevance-hint">
-                <strong>Step 1:</strong> Click a recipe card below, then <strong>Step 2:</strong> Click a relevance level:
-            </div>
-
-            <div class="relevance-buttons">
-                <button class="relevance-btn high" onclick="assignRelevance('high')">
-                    HIGH
-                </button>
-                <button class="relevance-btn medium" onclick="assignRelevance('medium')">
-                    MEDIUM
-                </button>
-                <button class="relevance-btn low" onclick="assignRelevance('low')">
-                    LOW
-                </button>
-            </div>
-
-            <!-- Summary -->
-            <div class="summary-section">
-                <h4>Current Summary:</h4>
-                <div class="summary-groups">
-                    <div class="summary-group high">
-                        <h5><span>HIGH Relevance</span></h5>
-                        <div class="summary-count" id="highCount">0</div>
-                        <div class="summary-recipes" id="highList">None yet</div>
-                    </div>
-                    <div class="summary-group medium">
-                        <h5><span>MEDIUM Relevance</span></h5>
-                        <div class="summary-count" id="mediumCount">0</div>
-                        <div class="summary-recipes" id="mediumList">None yet</div>
-                    </div>
-                    <div class="summary-group low">
-                        <h5><span>LOW Relevance</span></h5>
-                        <div class="summary-count" id="lowCount">0</div>
-                        <div class="summary-recipes" id="lowList">None yet</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recipe Grid -->
-            <div class="recipe-grid" id="recipeGrid"></div>
-
-            <!-- Submit -->
-            <div class="submit-section">
-                <button class="btn btn-primary" id="submitBtn" onclick="submitRankings()" disabled>
-                    Submit Categorizations
-                </button>
-            </div>
+        <!-- Label Studio Container -->
+        <div id="labelStudioWrapper" class="label-studio-wrapper">
+            <div id="label-studio"></div>
         </div>
 
         <!-- Success Screen -->
@@ -527,7 +198,7 @@
                 Your categorizations have been saved.<br>
                 Your feedback helps improve our recipe recommendations!
             </p>
-            <button class="btn btn-primary" onclick="startNew()">Categorize More Recipes</button>
+            <button class="btn btn-primary" onclick="startNew()">Evaluate More Recipes</button>
         </div>
     </div>
 
@@ -542,63 +213,100 @@
         };
 
         // ================================================================
-        // SAMPLE DATA - Replace with your actual data
+        // LABEL STUDIO CONFIG WITH RANKER + BUCKETS
+        // ================================================================
+
+        // This XML config uses the Ranker tag with 3 Buckets for HIGH/MEDIUM/LOW
+        const LABELING_CONFIG = `
+            <View>
+                <Style>
+                    .htx-ranker-column {
+                        background: #f5f5f5;
+                        border-radius: 12px;
+                        padding: 15px;
+                        min-height: 200px;
+                    }
+                    .htx-ranker-item {
+                        background: white;
+                        border: 2px solid #e0e0e0;
+                        border-radius: 10px;
+                        padding: 12px;
+                        margin: 8px 0;
+                    }
+                    .htx-ranker-item:hover {
+                        border-color: #2196F3;
+                    }
+                </Style>
+
+                <View style="display: flex; gap: 20px; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 12px;">
+                    <View style="flex-shrink: 0;">
+                        <Image name="query_image" value="$image" maxWidth="300px" />
+                    </View>
+                    <View style="flex: 1;">
+                        <Header value="Query Image" size="3"/>
+                        <Text name="description" value="$description" />
+                        <Header value="Instructions" size="4" style="margin-top: 15px; color: #1976d2;"/>
+                        <Text name="instructions" value="Drag each recipe into the appropriate bucket based on how well it matches the ingredients shown." />
+                        <View style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 8px;">
+                            <Text name="hint" value="HIGH = Can make well | MEDIUM = Partially make | LOW = Cannot make" />
+                        </View>
+                    </View>
+                </View>
+
+                <Header value="Drag recipes to categorize:" size="3" style="margin-bottom: 15px;"/>
+
+                <List name="recipes" value="$recipes" title="Recipes to Categorize" />
+
+                <Ranker name="relevance" toName="recipes">
+                    <Bucket name="high" title="HIGH - Can make well with these ingredients" />
+                    <Bucket name="medium" title="MEDIUM - Can partially make, needs a few more" />
+                    <Bucket name="low" title="LOW - Cannot make, needs too many ingredients" />
+                </Ranker>
+            </View>
+        `;
+
+        // ================================================================
+        // SAMPLE TASKS - Replace with your actual data
         // ================================================================
 
         const TASKS = [
             {
                 id: 1,
-                query_image: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500",
-                description: "Fresh vegetables: tomatoes, peppers, onions, lettuce, cucumber",
-                candidates: [
-                    { recipe_id: 101, title: "Greek Salad", ingredients: ["tomatoes", "cucumber", "onion", "feta", "olives"] },
-                    { recipe_id: 102, title: "Gazpacho", ingredients: ["tomatoes", "peppers", "cucumber", "onion", "garlic"] },
-                    { recipe_id: 103, title: "Ratatouille", ingredients: ["tomatoes", "peppers", "zucchini", "eggplant", "onion"] },
-                    { recipe_id: 104, title: "Stuffed Peppers", ingredients: ["peppers", "rice", "ground beef", "tomatoes", "onion"] },
-                    { recipe_id: 105, title: "Garden Salad", ingredients: ["lettuce", "tomatoes", "cucumber", "carrots", "dressing"] },
-                    { recipe_id: 106, title: "Bruschetta", ingredients: ["tomatoes", "basil", "garlic", "bread", "olive oil"] },
-                    { recipe_id: 107, title: "Tomato Soup", ingredients: ["tomatoes", "onion", "cream", "basil", "garlic"] },
-                    { recipe_id: 108, title: "Veggie Wrap", ingredients: ["lettuce", "tomatoes", "peppers", "hummus", "tortilla"] },
-                    { recipe_id: 109, title: "Shakshuka", ingredients: ["tomatoes", "peppers", "onion", "eggs", "spices"] },
-                    { recipe_id: 110, title: "Caesar Salad", ingredients: ["lettuce", "croutons", "parmesan", "caesar dressing"] },
-                    { recipe_id: 111, title: "Chicken Stir Fry", ingredients: ["chicken", "peppers", "onion", "soy sauce", "ginger"] },
-                    { recipe_id: 112, title: "Pasta Primavera", ingredients: ["pasta", "tomatoes", "peppers", "zucchini", "olive oil"] },
-                    { recipe_id: 113, title: "BLT Sandwich", ingredients: ["bacon", "lettuce", "tomatoes", "bread", "mayo"] },
-                    { recipe_id: 114, title: "Guacamole", ingredients: ["avocado", "tomatoes", "onion", "lime", "cilantro"] },
-                    { recipe_id: 115, title: "Fajitas", ingredients: ["peppers", "onion", "chicken", "tortillas", "spices"] },
-                    { recipe_id: 116, title: "Caprese Salad", ingredients: ["tomatoes", "mozzarella", "basil", "olive oil"] },
-                    { recipe_id: 117, title: "Vegetable Curry", ingredients: ["tomatoes", "onion", "peppers", "coconut milk", "curry"] },
-                    { recipe_id: 118, title: "Taco Salad", ingredients: ["lettuce", "tomatoes", "cheese", "ground beef", "tortilla chips"] },
-                    { recipe_id: 119, title: "Minestrone Soup", ingredients: ["tomatoes", "onion", "celery", "beans", "pasta"] },
-                    { recipe_id: 120, title: "Pizza Margherita", ingredients: ["tomatoes", "mozzarella", "basil", "pizza dough"] }
-                ]
+                data: {
+                    image: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500",
+                    description: "Available ingredients: tomatoes, peppers, onions, lettuce, cucumber",
+                    recipes: [
+                        { id: "101", title: "Greek Salad", body: "Ingredients: tomatoes, cucumber, onion, feta, olives" },
+                        { id: "102", title: "Gazpacho", body: "Ingredients: tomatoes, peppers, cucumber, onion, garlic" },
+                        { id: "103", title: "Ratatouille", body: "Ingredients: tomatoes, peppers, zucchini, eggplant, onion" },
+                        { id: "104", title: "Stuffed Peppers", body: "Ingredients: peppers, rice, ground beef, tomatoes, onion" },
+                        { id: "105", title: "Garden Salad", body: "Ingredients: lettuce, tomatoes, cucumber, carrots, dressing" },
+                        { id: "106", title: "Bruschetta", body: "Ingredients: tomatoes, basil, garlic, bread, olive oil" },
+                        { id: "107", title: "Tomato Soup", body: "Ingredients: tomatoes, onion, cream, basil, garlic" },
+                        { id: "108", title: "Veggie Wrap", body: "Ingredients: lettuce, tomatoes, peppers, hummus, tortilla" },
+                        { id: "109", title: "Shakshuka", body: "Ingredients: tomatoes, peppers, onion, eggs, spices" },
+                        { id: "110", title: "Caesar Salad", body: "Ingredients: lettuce, croutons, parmesan, caesar dressing" }
+                    ]
+                }
             },
             {
                 id: 2,
-                query_image: "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500",
-                description: "Protein ingredients: chicken breast, eggs, tofu, beans",
-                candidates: [
-                    { recipe_id: 201, title: "Grilled Chicken Breast", ingredients: ["chicken", "olive oil", "herbs", "lemon"] },
-                    { recipe_id: 202, title: "Scrambled Eggs", ingredients: ["eggs", "butter", "salt", "pepper"] },
-                    { recipe_id: 203, title: "Tofu Stir Fry", ingredients: ["tofu", "vegetables", "soy sauce", "garlic"] },
-                    { recipe_id: 204, title: "Black Bean Tacos", ingredients: ["beans", "tortillas", "salsa", "cheese"] },
-                    { recipe_id: 205, title: "Chicken Salad", ingredients: ["chicken", "mayo", "celery", "lettuce"] },
-                    { recipe_id: 206, title: "Egg Fried Rice", ingredients: ["eggs", "rice", "vegetables", "soy sauce"] },
-                    { recipe_id: 207, title: "Tofu Curry", ingredients: ["tofu", "coconut milk", "curry paste", "vegetables"] },
-                    { recipe_id: 208, title: "Bean Soup", ingredients: ["beans", "onion", "garlic", "broth", "herbs"] },
-                    { recipe_id: 209, title: "Chicken Parmesan", ingredients: ["chicken", "tomato sauce", "mozzarella", "breadcrumbs"] },
-                    { recipe_id: 210, title: "Omelette", ingredients: ["eggs", "cheese", "vegetables", "butter"] },
-                    { recipe_id: 211, title: "Mapo Tofu", ingredients: ["tofu", "ground pork", "chili", "sichuan pepper"] },
-                    { recipe_id: 212, title: "Refried Beans", ingredients: ["beans", "onion", "garlic", "lard", "spices"] },
-                    { recipe_id: 213, title: "Chicken Alfredo", ingredients: ["chicken", "pasta", "cream", "parmesan"] },
-                    { recipe_id: 214, title: "Eggs Benedict", ingredients: ["eggs", "english muffin", "ham", "hollandaise"] },
-                    { recipe_id: 215, title: "General Tso Tofu", ingredients: ["tofu", "soy sauce", "ginger", "garlic", "chili"] },
-                    { recipe_id: 216, title: "Bean Burrito", ingredients: ["beans", "rice", "cheese", "tortilla", "salsa"] },
-                    { recipe_id: 217, title: "Chicken Teriyaki", ingredients: ["chicken", "teriyaki sauce", "rice", "broccoli"] },
-                    { recipe_id: 218, title: "Shakshuka", ingredients: ["eggs", "tomatoes", "peppers", "onion", "spices"] },
-                    { recipe_id: 219, title: "Crispy Tofu Bowl", ingredients: ["tofu", "rice", "edamame", "avocado", "sesame"] },
-                    { recipe_id: 220, title: "Chili Con Carne", ingredients: ["beans", "ground beef", "tomatoes", "chili", "onion"] }
-                ]
+                data: {
+                    image: "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500",
+                    description: "Available ingredients: chicken breast, eggs, tofu, beans",
+                    recipes: [
+                        { id: "201", title: "Grilled Chicken", body: "Ingredients: chicken, olive oil, herbs, lemon" },
+                        { id: "202", title: "Scrambled Eggs", body: "Ingredients: eggs, butter, salt, pepper" },
+                        { id: "203", title: "Tofu Stir Fry", body: "Ingredients: tofu, vegetables, soy sauce, garlic" },
+                        { id: "204", title: "Black Bean Tacos", body: "Ingredients: beans, tortillas, salsa, cheese" },
+                        { id: "205", title: "Chicken Salad", body: "Ingredients: chicken, mayo, celery, lettuce" },
+                        { id: "206", title: "Egg Fried Rice", body: "Ingredients: eggs, rice, vegetables, soy sauce" },
+                        { id: "207", title: "Tofu Curry", body: "Ingredients: tofu, coconut milk, curry paste, vegetables" },
+                        { id: "208", title: "Bean Soup", body: "Ingredients: beans, onion, garlic, broth, herbs" },
+                        { id: "209", title: "Chicken Parmesan", body: "Ingredients: chicken, tomato sauce, mozzarella, breadcrumbs" },
+                        { id: "210", title: "Omelette", body: "Ingredients: eggs, cheese, vegetables, butter" }
+                    ]
+                }
             }
         ];
 
@@ -607,9 +315,8 @@
         // ================================================================
 
         let currentTaskIndex = 0;
-        let sessionId = 'public_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        let currentRelevance = {};  // recipe_id -> 'high' | 'medium' | 'low'
-        let selectedRecipeId = null;
+        let sessionId = 'ls_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        let labelStudioInstance = null;
         let allSubmissions = [];
 
         // ================================================================
@@ -617,200 +324,82 @@
         // ================================================================
 
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("Recipe Relevance Evaluation");
+            console.log("Label Studio Ranker Interface");
             console.log("Session ID:", sessionId);
-            document.getElementById('sessionDisplay').textContent = `Session: ${sessionId.substring(0, 25)}...`;
+            document.getElementById('sessionId').textContent = `Session: ${sessionId.substring(0, 20)}...`;
 
-            renderCurrentTask();
+            initializeLabelStudio();
         });
 
-        function renderCurrentTask() {
+        function initializeLabelStudio() {
             const task = TASKS[currentTaskIndex];
-            currentRelevance = {};
-            selectedRecipeId = null;
 
-            // Update header
-            document.getElementById('taskNumber').textContent = currentTaskIndex + 1;
-            document.getElementById('totalTasks').textContent = TASKS.length;
-            document.getElementById('queryImage').src = task.query_image;
-            document.getElementById('queryDescription').textContent = task.description;
-            document.getElementById('totalRecipes').textContent = task.candidates.length;
-
-            // Render recipe grid
-            renderRecipeGrid(task.candidates);
-
-            // Update UI
+            // Update progress
             updateProgress();
-            updateSummary();
-        }
 
-        function renderRecipeGrid(candidates) {
-            const grid = document.getElementById('recipeGrid');
-            grid.innerHTML = '';
+            // Clear previous instance
+            const container = document.getElementById('label-studio');
+            container.innerHTML = '';
 
-            candidates.forEach(recipe => {
-                const card = document.createElement('div');
-                card.className = 'recipe-card';
-                card.id = `recipe-${recipe.recipe_id}`;
-                card.onclick = () => selectRecipe(recipe.recipe_id);
+            // Initialize Label Studio with Ranker config
+            labelStudioInstance = new LabelStudio('label-studio', {
+                config: LABELING_CONFIG,
 
-                const ingredientTags = recipe.ingredients.slice(0, 8).map(ing =>
-                    `<span class="ingredient-tag">${ing}</span>`
-                ).join('');
+                interfaces: [
+                    "panel",
+                    "submit",
+                    "skip",
+                    "controls"
+                ],
 
-                const moreCount = recipe.ingredients.length - 8;
-                const moreTag = moreCount > 0 ?
-                    `<span class="ingredient-tag" style="background:#fff3e0;color:#e65100;border-color:#ffe0b2;">+${moreCount} more</span>` : '';
+                task: {
+                    id: task.id,
+                    data: task.data
+                },
 
-                card.innerHTML = `
-                    <div class="relevance-badge" id="badge-${recipe.recipe_id}">?</div>
-                    <div class="recipe-title">${recipe.title}</div>
-                    <div class="recipe-ingredients">
-                        <h5>Ingredients:</h5>
-                        <div class="ingredient-tags">${ingredientTags}${moreTag}</div>
-                    </div>
-                `;
+                user: {
+                    pk: 1,
+                    firstName: "Anonymous",
+                    lastName: "User"
+                },
 
-                grid.appendChild(card);
-            });
-        }
+                onSubmitAnnotation: function(ls, annotation) {
+                    handleSubmission(annotation);
+                },
 
-        // ================================================================
-        // RELEVANCE LOGIC
-        // ================================================================
+                onSkipTask: function(ls) {
+                    console.log("Task skipped");
+                    moveToNextTask();
+                },
 
-        function selectRecipe(recipeId) {
-            // Clear previous selection
-            document.querySelectorAll('.recipe-card.selected').forEach(el => {
-                el.classList.remove('selected');
-            });
-
-            // Select new
-            selectedRecipeId = recipeId;
-            const card = document.getElementById(`recipe-${recipeId}`);
-            if (card) {
-                card.classList.add('selected');
-            }
-
-            // Highlight active relevance button
-            document.querySelectorAll('.relevance-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            if (currentRelevance[recipeId]) {
-                const activeBtn = document.querySelector(`.relevance-btn.${currentRelevance[recipeId]}`);
-                if (activeBtn) activeBtn.classList.add('active');
-            }
-        }
-
-        function assignRelevance(level) {
-            if (!selectedRecipeId) {
-                alert('Please click a recipe card first!');
-                return;
-            }
-
-            setRelevance(selectedRecipeId, level);
-
-            // Auto-advance to next unrated recipe
-            const task = TASKS[currentTaskIndex];
-            const nextUnrated = task.candidates.find(r => !currentRelevance[r.recipe_id]);
-            if (nextUnrated) {
-                selectRecipe(nextUnrated.recipe_id);
-                // Scroll to the card
-                const card = document.getElementById(`recipe-${nextUnrated.recipe_id}`);
-                if (card) {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        }
-
-        function setRelevance(recipeId, level) {
-            // Update state
-            currentRelevance[recipeId] = level;
-
-            // Update card appearance
-            const card = document.getElementById(`recipe-${recipeId}`);
-            const badge = document.getElementById(`badge-${recipeId}`);
-
-            // Remove old classes
-            card.classList.remove('high', 'medium', 'low');
-
-            // Add new class
-            card.classList.add(level);
-            badge.textContent = level.toUpperCase();
-
-            // Update UI
-            updateProgress();
-            updateSummary();
-        }
-
-        function updateProgress() {
-            const task = TASKS[currentTaskIndex];
-            const total = task.candidates.length;
-            const categorized = Object.keys(currentRelevance).length;
-            const percent = Math.round((categorized / total) * 100);
-
-            document.getElementById('rankedCount').textContent = categorized;
-            document.getElementById('progressFill').style.width = `${percent}%`;
-            document.getElementById('progressFill').textContent = `${percent}%`;
-
-            document.getElementById('submitBtn').disabled = categorized < total;
-        }
-
-        function updateSummary() {
-            const task = TASKS[currentTaskIndex];
-
-            const groups = { high: [], medium: [], low: [] };
-
-            Object.entries(currentRelevance).forEach(([recipeId, level]) => {
-                const recipe = task.candidates.find(r => r.recipe_id == recipeId);
-                if (recipe) {
-                    groups[level].push(recipe.title);
+                onLabelStudioLoad: function(ls) {
+                    console.log("Label Studio loaded for task", task.id);
                 }
             });
-
-            // Update counts
-            document.getElementById('highCount').textContent = groups.high.length;
-            document.getElementById('mediumCount').textContent = groups.medium.length;
-            document.getElementById('lowCount').textContent = groups.low.length;
-
-            // Update lists
-            document.getElementById('highList').textContent =
-                groups.high.length ? groups.high.slice(0, 3).join(', ') + (groups.high.length > 3 ? '...' : '') : 'None yet';
-            document.getElementById('mediumList').textContent =
-                groups.medium.length ? groups.medium.slice(0, 3).join(', ') + (groups.medium.length > 3 ? '...' : '') : 'None yet';
-            document.getElementById('lowList').textContent =
-                groups.low.length ? groups.low.slice(0, 3).join(', ') + (groups.low.length > 3 ? '...' : '') : 'None yet';
         }
 
         // ================================================================
-        // SUBMISSION
+        // SUBMISSION HANDLING
         // ================================================================
 
-        async function submitRankings() {
+        function handleSubmission(annotation) {
             const task = TASKS[currentTaskIndex];
-            const total = task.candidates.length;
 
-            if (Object.keys(currentRelevance).length < total) {
-                alert(`Please categorize all ${total} recipes before submitting.`);
-                return;
-            }
+            // Extract the ranker results from annotation
+            const serialized = annotation.serializeAnnotation();
 
-            // Prepare submission data
+            // The ranker output looks like:
+            // { ranker: { high: ["101", "102"], medium: ["103"], low: ["104", "105"], _: [...] } }
+
             const submission = {
                 session_id: sessionId,
                 task_id: task.id,
-                query_image: task.query_image,
-                relevance: Object.entries(currentRelevance).map(([recipeId, level]) => ({
-                    recipe_id: parseInt(recipeId),
-                    relevance: level,
-                    // Convert to numeric score for analysis: high=3, medium=2, low=1
-                    score: level === 'high' ? 3 : level === 'medium' ? 2 : 1
-                })),
+                query_image: task.data.image,
+                annotation: serialized,
                 timestamp: new Date().toISOString()
             };
 
-            console.log("Submitting:", submission);
+            console.log("Annotation submitted:", submission);
             allSubmissions.push(submission);
 
             // Save to localStorage
@@ -819,22 +408,15 @@
             }
 
             // Send to backend
-            await sendToBackend(submission);
+            sendToBackend(submission);
 
             // Move to next task
-            currentTaskIndex++;
-
-            if (currentTaskIndex >= TASKS.length) {
-                showSuccess();
-            } else {
-                renderCurrentTask();
-                window.scrollTo(0, 0);
-            }
+            moveToNextTask();
         }
 
         function saveToLocalStorage(data) {
             try {
-                const key = 'recipe_relevance_public';
+                const key = 'recipe_relevance_ranker';
                 const existing = JSON.parse(localStorage.getItem(key) || '[]');
                 existing.push(data);
                 localStorage.setItem(key, JSON.stringify(existing));
@@ -864,10 +446,32 @@
             }
         }
 
-        function showSuccess() {
-            document.getElementById('taskInfo').classList.add('hidden');
-            document.getElementById('rankingContainer').classList.add('hidden');
-            document.querySelector('.progress-bar-container').classList.add('hidden');
+        // ================================================================
+        // NAVIGATION
+        // ================================================================
+
+        function moveToNextTask() {
+            currentTaskIndex++;
+
+            if (currentTaskIndex >= TASKS.length) {
+                showSuccessScreen();
+            } else {
+                initializeLabelStudio();
+            }
+        }
+
+        function updateProgress() {
+            const total = TASKS.length;
+            const current = currentTaskIndex + 1;
+            const percentage = (current / total) * 100;
+
+            document.getElementById('taskCounter').textContent = `${current} of ${total}`;
+            document.getElementById('progressFill').style.width = `${percentage}%`;
+        }
+
+        function showSuccessScreen() {
+            document.getElementById('labelStudioWrapper').classList.add('hidden');
+            document.querySelector('.progress-container').classList.add('hidden');
             document.getElementById('successScreen').classList.remove('hidden');
 
             console.log("All submissions:", allSubmissions);
@@ -875,16 +479,15 @@
 
         function startNew() {
             currentTaskIndex = 0;
-            sessionId = 'public_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionId = 'ls_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             allSubmissions = [];
 
             document.getElementById('successScreen').classList.add('hidden');
-            document.getElementById('taskInfo').classList.remove('hidden');
-            document.getElementById('rankingContainer').classList.remove('hidden');
-            document.querySelector('.progress-bar-container').classList.remove('hidden');
+            document.getElementById('labelStudioWrapper').classList.remove('hidden');
+            document.querySelector('.progress-container').classList.remove('hidden');
 
-            document.getElementById('sessionDisplay').textContent = `Session: ${sessionId.substring(0, 25)}...`;
-            renderCurrentTask();
+            document.getElementById('sessionId').textContent = `Session: ${sessionId.substring(0, 20)}...`;
+            initializeLabelStudio();
         }
     </script>
 </body>
